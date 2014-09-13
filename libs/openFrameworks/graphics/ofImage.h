@@ -92,6 +92,7 @@ void ofCloseFreeImage();
 
 
 /// \brief A class representing an image using memory and gpu based pixels.
+/// \tparam PixelType The data type used to represent a single pixel value.
 template<typename PixelType>
 class ofImage_ : public ofBaseImage_<PixelType>{
 public:
@@ -142,7 +143,7 @@ public:
     ///
     /// If the ofImage doesn't have a texture, nothing will be drawn to the screen.
     /// \returns Returns whether the ofImage has a texture or not. 
-    bool isUsingTexture();
+    bool isUsingTexture() const;
 
     /// \brief Returns the texture reference that the ofImage contains. 
     ///
@@ -152,15 +153,16 @@ public:
     ///
     /// \returns Returns the texture reference that the ofImage contains. 
     ofTexture & getTextureReference();
+    const ofTexture & getTextureReference() const;
 
     // quick texture binding shortcut
     /// \brief Binds the oftexture instance that the ofImage contains so that it can be used for advanced drawing.
-    void bind();
+    void bind(int textureLocation=0) const;
 
     /// \brief Unbinds the ofTexture instance that the ofImage contains. 
     ///
     /// Call this after you call bind().
-    void unbind();
+    void unbind(int textureLocation=0) const;
 
     /// \brief Loads an image given by fileName.
     /// \param fileName Program looks for image given by fileName, relative to the data folder.
@@ -217,7 +219,8 @@ public:
     /// Make sure you call either update() or reloadTexture() after making changes to the ofPixels.
     ///
     /// \returns Returns an ofPixels reference that you can use to manipulate the raw pixel data of the ofImage.
-    ofPixels_<PixelType> &	 	getPixelsRef();
+    ofPixels_<PixelType> & getPixelsRef();
+    const ofPixels_<PixelType> & getPixelsRef() const;
 
     operator ofPixels_<PixelType>&();
     
@@ -372,14 +375,14 @@ public:
     ///
     /// \param x Draw position on the x axis.
     /// \param y Draw position on the y axis.
-    void draw(float x, float y);
+    void draw(float x, float y) const;
     
     /// \brief Draw the texture at it's normal size with depth.
     ///
     /// \param x Draw position on the x axis.
     /// \param y Draw position on the y axis.
     /// \param z Draw position on the z axis.
-    void draw(float x, float y, float z);
+    void draw(float x, float y, float z) const;
     
     /// \brief Draw the image at a given size.
     ///
@@ -387,7 +390,7 @@ public:
     /// \param y Draw position on the y axis.
     /// \param w Draw width.
     /// \param h Draw height.
-    void draw(float x, float y, float w, float h);
+    void draw(float x, float y, float w, float h) const;
     
     /// \brief Draw the image at a given size with depth.
     ///
@@ -396,7 +399,7 @@ public:
     /// \param z Draw position on the z axis.
     /// \param w Draw width.
     /// \param h Draw height.
-    void draw(float x, float y, float z, float w, float h);
+    void draw(float x, float y, float z, float w, float h) const;
     
     /// \brief Draws a subsection of the image.
     ///
@@ -409,7 +412,7 @@ public:
     /// \param h Height of subsection to draw.
     /// \param sx X position in image to begin cropping from.
     /// \param sy Y position in image to begin cropping from.
-    void drawSubsection(float x, float y, float w, float h, float sx, float sy);
+    void drawSubsection(float x, float y, float w, float h, float sx, float sy) const;
     
     /// \brief Draws a subsection of the image.
     ///
@@ -423,7 +426,7 @@ public:
     /// \param h Height of subsection to draw.
     /// \param sx X position in image to begin cropping from.
     /// \param sy Y position in image to begin cropping from.
-    void drawSubsection(float x, float y, float z, float w, float h, float sx, float sy);
+    void drawSubsection(float x, float y, float z, float w, float h, float sx, float sy) const;
     
     /// \brief Draws a subsection of the image.
     ///
@@ -438,7 +441,7 @@ public:
     /// \param sy Y position in image to begin cropping from.
     /// \param sw Source width of cropped area.
     /// \param sh Source height of cropped area.
-    void drawSubsection(float x, float y, float w, float h, float sx, float sy, float sw, float sh);
+    void drawSubsection(float x, float y, float w, float h, float sx, float sy, float sw, float sh) const;
     
     /// \brief Draws a subsection of the image.
     ///
@@ -454,15 +457,15 @@ public:
     /// \param sy Y position in image to begin cropping from.
     /// \param sw Source width of cropped area.
     /// \param sh Source height of cropped area.
-    void drawSubsection(float x, float y, float z, float w, float h, float sx, float sy, float sw, float sh);
+    void drawSubsection(float x, float y, float z, float w, float h, float sx, float sy, float sw, float sh) const;
 
     /// \brief Returns height of image as a float. 
     /// \returns Returns height of image as float.
-    float getHeight();
+    float getHeight() const;
     
     /// \brief Returns width of image as a float. 
     /// \returns Returns width of image as float.
-    float  getWidth();
+    float  getWidth() const;
     /// \brief Whether the image has been allocated either by a call to allocate or by loading pixel data into the image.
     /// \returns Returns true if the image has been allocated.
     bool bAllocated() {return pixels.isAllocated();};	// legacy function
@@ -473,8 +476,11 @@ public:
     /// \brief Loads ofPixels data into ofTexture so that draw() calls reflect changes to the pixels.
     void reloadTexture();
 
-    int width, height, bpp; ///< w,h, bits per pixel
-    int type; ///< OF_IMAGE_GRAYSCALE, OF_IMAGE_COLOR, OF_IMAGE_COLOR_ALPHA
+    int width;  ///< \brief Image width in pixels.
+    int height; ///< \brief Image Height in pixels.
+    int bpp;    ///< \brief Bits per image pixel.
+    int type;   ///< \brief Image type.
+                ///< \sa ofImageType
 
     ofImage_<PixelType> & operator=(ofPixels_<PixelType> & pixels);
 

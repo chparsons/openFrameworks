@@ -5,6 +5,7 @@
 #include "ofAppRunner.h"
 
 #include "Poco/String.h"
+#include "Poco/UTF8String.h"
 #include "Poco/LocalDateTime.h"
 #include "Poco/DateTimeFormatter.h"
 #include "Poco/URI.h"
@@ -21,7 +22,7 @@
 #endif
 
 
-#if defined(TARGET_OF_IOS) || defined(TARGET_OSX ) || defined(TARGET_LINUX)
+#if defined(TARGET_OF_IOS) || defined(TARGET_OSX ) || defined(TARGET_LINUX) || defined(TARGET_EMSCRIPTEN)
 	#include <sys/time.h>
 #endif
 
@@ -85,7 +86,13 @@ void ofResetElapsedTimeCounter(){
  * 32-bit, where the GLUT API return value is also overflowed.
  */
 unsigned long long ofGetSystemTime( ) {
-	#ifndef TARGET_WIN32
+	#if (defined(TARGET_LINUX) && !defined(TARGET_RASPBERRY_PI)) || defined(TARGET_EMSCRIPTEN)
+		struct timespec now;
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		return
+			(unsigned long long) now.tv_nsec/1000000. +
+			(unsigned long long) now.tv_sec*1000;
+	#elif !defined( TARGET_WIN32 )
 		struct timeval now;
 		gettimeofday( &now, NULL );
 		return 
@@ -101,7 +108,13 @@ unsigned long long ofGetSystemTime( ) {
 }
 
 unsigned long long ofGetSystemTimeMicros( ) {
-	#ifndef TARGET_WIN32
+	#if (defined(TARGET_LINUX) && !defined(TARGET_RASPBERRY_PI)) || defined(TARGET_EMSCRIPTEN)
+		struct timespec now;
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		return
+			(unsigned long long) now.tv_nsec/1000. +
+			(unsigned long long) now.tv_sec*1000000;
+	#elif !defined( TARGET_WIN32 )
 		struct timeval now;
 		gettimeofday( &now, NULL );
 		return 
@@ -238,12 +251,16 @@ static Poco::Path & dataPathRoot(){
 
 //--------------------------------------------------
 Poco::Path getWorkingDir(){
+#ifndef TARGET_EMSCRIPTEN
 	char charWorkingDir[MAXPATHLEN];
 	char* ret = getcwd(charWorkingDir, MAXPATHLEN);
 	if(ret)
 		return Poco::Path(charWorkingDir);
 	else
 		return Poco::Path();
+#else
+	return Poco::Path();
+#endif
 }
 
 //--------------------------------------------------
@@ -265,7 +282,9 @@ void ofSetWorkingDirectoryToDefault(){
 #endif
 
 	defaultWorkingDirectory() = getWorkingDir();
+#ifndef TARGET_EMSCRIPTEN
 	defaultWorkingDirectory().makeAbsolute();
+#endif
 }
 	
 //--------------------------------------------------
@@ -539,41 +558,20 @@ vector <string> ofSplitString(const string & source, const string & delimiter, b
 
 //--------------------------------------------------
 string ofJoinString(const vector<string>& stringElements, const string& delimiter){
-	string resultString = "";
-	int numElements = stringElements.size();
-
-	for(int k = 0; k < numElements; k++){
-		if( k < numElements-1 ){
-			resultString += stringElements[k] + delimiter;
-		} else {
-			resultString += stringElements[k];
-		}
-	}
-
-	return resultString;
+    return Poco::cat(delimiter, stringElements.begin(), stringElements.end());
 }
 
 //--------------------------------------------------
 void ofStringReplace(string& input, const string& searchStr, const string& replaceStr){
-	size_t uPos = 0; 
-	size_t uFindLen = searchStr.length(); 
-	size_t uReplaceLen = replaceStr.length();
-		
-	if( uFindLen == 0 ){
-		return;
-	}
-
-	for( ;(uPos = input.find( searchStr, uPos )) != std::string::npos; ){
-		input.replace( uPos, uFindLen, replaceStr );
-		uPos += uReplaceLen;
-	}	
+    input = Poco::replace(input, searchStr, replaceStr);
 }
 
 //--------------------------------------------------
 bool ofIsStringInString(const string& haystack, const string& needle){
-	return ( strstr(haystack.c_str(), needle.c_str() ) != NULL );
+    return haystack.find(needle) != std::string::npos;
 }
 
+//--------------------------------------------------
 int ofStringTimesInString(const string& haystack, const string& needle){
 	const size_t step = needle.size();
 
@@ -590,16 +588,12 @@ int ofStringTimesInString(const string& haystack, const string& needle){
 
 //--------------------------------------------------
 string ofToLower(const string & src){
-	string dst(src);
-	transform(src.begin(),src.end(),dst.begin(),::tolower);
-	return dst;
+    return Poco::UTF8::toLower(src);
 }
 
 //--------------------------------------------------
 string ofToUpper(const string & src){
-	string dst(src);
-	transform(src.begin(),src.end(),dst.begin(),::toupper);
-	return dst;
+    return Poco::UTF8::toUpper(src);
 }
 
 //--------------------------------------------------
@@ -772,7 +766,7 @@ void ofSaveFrame(bool bUseViewport){
 string ofSystem(const string& command){
 	FILE * ret = NULL;
 #ifdef TARGET_WIN32
-	 ret = _popen(command.c_str(),"r");
+	ret = _popen(command.c_str(),"r");
 #else 
 	ret = popen(command.c_str(),"r");
 #endif
@@ -787,7 +781,11 @@ string ofSystem(const string& command){
 		      c = fgetc (ret);
 		      strret += c;
 		} while (c != EOF);
-		fclose (ret);
+#ifdef TARGET_WIN32
+		_pclose (ret);
+#else
+		pclose (ret);
+#endif
 	}
 
 	return strret;
@@ -801,8 +799,8 @@ ofTargetPlatform ofGetTargetPlatform(){
         return OF_TARGET_LINUX64;
     } else if(ofIsStringInString(arch,"armv6l")) {
         return OF_TARGET_LINUXARMV6L;
-    } else if(ofIsStringInString(arch,"armv6l")) {
-        return OF_TARGET_LINUXARMV6L;
+    } else if(ofIsStringInString(arch,"armv7l")) {
+        return OF_TARGET_LINUXARMV7L;
     } else {
         return OF_TARGET_LINUX;
     }
@@ -818,5 +816,7 @@ ofTargetPlatform ofGetTargetPlatform(){
     return OF_TARGET_ANDROID;
 #elif defined(TARGET_OF_IOS)
     return OF_TARGET_IOS;
+#elif defined(TARGET_EMSCRIPTEN)
+    return OF_TARGET_EMSCRIPTEN;
 #endif
 }
