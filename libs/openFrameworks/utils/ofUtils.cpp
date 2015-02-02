@@ -624,7 +624,7 @@ string ofToUpper(const string & src){
 string ofVAArgsToString(const char * format, ...){
 	// variadic args to string:
 	// http://www.codeproject.com/KB/string/string_format.aspx
-	static char aux_buffer[10000];
+	char aux_buffer[10000];
 	string retStr("");
 	if (NULL != format){
 
@@ -758,20 +758,27 @@ unsigned int ofGetVersionPatch() {
 
 //--------------------------------------------------
 void ofSaveScreen(const string& filename) {
-   ofImage screen;
+   /*ofImage screen;
    screen.allocate(ofGetWidth(), ofGetHeight(), OF_IMAGE_COLOR);
    screen.grabScreen(0, 0, ofGetWidth(), ofGetHeight());
-   screen.save(filename);
+   screen.save(filename);*/
+	ofPixels pixels;
+	ofGetGLRenderer()->saveFullViewport(pixels);
+	ofSaveImage(pixels,filename);
 }
 
 //--------------------------------------------------
 void ofSaveViewport(const string& filename) {
 	// because ofSaveScreen doesn't related to viewports
-	ofImage screen;
+	/*ofImage screen;
 	ofRectangle view = ofGetCurrentViewport();
 	screen.allocate(view.width, view.height, OF_IMAGE_COLOR);
 	screen.grabScreen(0, 0, view.width, view.height);
-	screen.save(filename);
+	screen.save(filename);*/
+
+	ofPixels pixels;
+	ofGetGLRenderer()->saveFullViewport(pixels);
+	ofSaveImage(pixels,filename);
 }
 
 //--------------------------------------------------
@@ -796,15 +803,16 @@ string ofSystem(const string& command){
 #endif
 	
 	string strret;
-	char c;
+	int c;
 
 	if (ret == NULL){
 		ofLogError("ofUtils") << "ofSystem(): error opening return file for command \"" << command  << "\"";
 	}else{
-		do {
-		      c = fgetc (ret);
-		      strret += c;
-		} while (c != EOF);
+		c = fgetc (ret);
+		while (c != EOF) {
+			strret += c;
+			c = fgetc (ret);
+		}
 #ifdef TARGET_WIN32
 		_pclose (ret);
 #else
