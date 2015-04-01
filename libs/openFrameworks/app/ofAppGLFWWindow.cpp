@@ -142,6 +142,9 @@ void ofAppGLFWWindow::setupOpenGL(int w, int h, int screenMode){
 
 	int requestedMode = screenMode;
 
+  if ( requestedMode == OF_WINDOW_UNDECORATED )
+    glfwWindowHint(GLFW_DECORATED, GL_FALSE);
+
 	glfwWindowHint(GLFW_RED_BITS, rBits);
 	glfwWindowHint(GLFW_GREEN_BITS, gBits);
 	glfwWindowHint(GLFW_BLUE_BITS, bBits);
@@ -228,7 +231,7 @@ void ofAppGLFWWindow::setupOpenGL(int w, int h, int screenMode){
         pixelScreenCoordScale = framebufferW / windowW;
         
         //have to update the windowShape to account for retina coords
-        if( windowMode == OF_WINDOW ){
+        if( windowMode == OF_WINDOW || windowMode == OF_WINDOW_UNDECORATED ){
             setWindowShape(windowW, windowH);
         }
 	}
@@ -405,7 +408,7 @@ ofPoint ofAppGLFWWindow::getWindowPosition(){
     int x, y; 
 	glfwGetWindowPos(windowP, &x, &y);
     
-    if( windowMode == OF_WINDOW ){
+    if( windowMode == OF_WINDOW || windowMode == OF_WINDOW_UNDECORATED ){
         nonFullScreenX = x; 
         nonFullScreenY = y; 
     }   
@@ -510,7 +513,7 @@ int	ofAppGLFWWindow::getWindowMode(){
 void ofAppGLFWWindow::setWindowPosition(int x, int y){
     glfwSetWindowPos(windowP,x/pixelScreenCoordScale,y/pixelScreenCoordScale);
     
-    if( windowMode == OF_WINDOW ){
+    if( windowMode == OF_WINDOW || windowMode == OF_WINDOW_UNDECORATED ){
         nonFullScreenX=x;
         nonFullScreenY=y;
     }
@@ -710,7 +713,7 @@ void ofAppGLFWWindow::setFullscreen(bool fullscreen){
         //make sure the window is getting the mouse/key events
         [cocoaWindow makeFirstResponder:cocoaWindow.contentView];
  
-	}else if( windowMode == OF_WINDOW ){
+	}else if( windowMode == OF_WINDOW || windowMode == OF_WINDOW_UNDECORATED ){
 		[NSApp setPresentationOptions:NSApplicationPresentationDefault];
 		NSWindow * cocoaWindow = glfwGetCocoaWindow(windowP);
 		[cocoaWindow setStyleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask];
@@ -785,7 +788,7 @@ void ofAppGLFWWindow::setFullscreen(bool fullscreen){
  
         SetWindowPos(hwnd, HWND_TOPMOST, xpos, ypos, fullscreenW, fullscreenH, SWP_SHOWWINDOW);
  
-	}else if( windowMode == OF_WINDOW ){
+	}else if( windowMode == OF_WINDOW || windowMode == OF_WINDOW_UNDECORATED ){
  
 		HWND hwnd = glfwGetWin32Window(windowP);
  
@@ -810,7 +813,7 @@ void ofAppGLFWWindow::toggleFullscreen(){
 	if (windowMode == OF_GAME_MODE) return;
 
 
-	if (windowMode == OF_WINDOW){
+	if (windowMode == OF_WINDOW || windowMode == OF_WINDOW_UNDECORATED){
 		setFullscreen(true);
 	} else {
 		setFullscreen(false);

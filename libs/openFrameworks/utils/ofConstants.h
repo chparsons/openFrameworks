@@ -407,7 +407,8 @@ enum ofFillFlag{
 enum ofWindowMode{
 	OF_WINDOW 		= 0,
 	OF_FULLSCREEN 	= 1,
- 	OF_GAME_MODE	= 2
+ 	OF_GAME_MODE	= 2,
+	OF_WINDOW_UNDECORATED 		= 3
 };
 
 enum ofAspectRatioMode {
